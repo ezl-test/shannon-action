@@ -35,7 +35,7 @@ jobs:
           api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-The scan runs to completion (`--follow`) and the job **fails if the pipeline fails**. Two artifacts are uploaded by default:
+The scan runs to completion (`--follow`). The job **passes only on a complete assessment**: it fails if the scan produced no report, or if any vulnerability class could not be assessed (a partial run — because absence of findings for an unassessed class is not a clean result). Two artifacts are uploaded by default:
 
 - `shannon-report-<workspace>` — just the report (PDF + Markdown, and SARIF if produced).
 - `shannon-workspace-<workspace>` — the full workspace (logs, agent transcripts, deliverables, browser artifacts) for debugging, uploaded even on failure. The target's saved auth session (`auth-state.json`) is excluded.
@@ -125,7 +125,7 @@ If the config does not request SARIF, this step is skipped.
 ## Notes
 
 - The first run pulls the `keygraph/shannon` worker image and the Temporal image; subsequent runs on a warm runner are faster.
-- `start --follow` exits non-zero when the **pipeline** fails, not when vulnerabilities are found. Gate on findings by inspecting the report if you need that.
+- Pass/fail is decided from the structured `report.json`: the job passes only when every vulnerability class was assessed. It does **not** fail merely because vulnerabilities were found — gate on findings by inspecting the report if you need that.
 
 ## License
 

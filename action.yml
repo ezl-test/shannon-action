@@ -98,7 +98,9 @@ runs:
         IN_VERSION: ${{ inputs.version }}
         IN_PIPELINE_TESTING: ${{ inputs.pipeline-testing }}
       run: |
-        set -euo pipefail
+        # No `set -e`: the scan's exit code is captured and used to decide pass/fail,
+        # so the script must continue past a failed scan rather than abort on it.
+        set -uo pipefail
 
         # Export only the values that were provided.
         [ -n "$IN_API_KEY" ]       && export SHANNON_AI_API_KEY="$IN_API_KEY"
@@ -120,13 +122,32 @@ runs:
 
         echo "Running: shannon ${ARGS[*]}"
         npx --yes "@keygraph/shannon@${IN_VERSION}" "${ARGS[@]}"
+        RC=$?
 
-        # Resolve report outputs (only present on a successful run).
+        # Resolve report outputs (only present when the scan produced a report).
         {
           [ -f "$WS_DIR/Security-Assessment-Report.pdf" ] && echo "report-pdf=$WS_DIR/Security-Assessment-Report.pdf"
           [ -f "$WS_DIR/Security-Assessment-Report.md" ]  && echo "report-md=$WS_DIR/Security-Assessment-Report.md"
           [ -f "$WS_DIR/report.sarif" ]                   && echo "sarif=$WS_DIR/report.sarif"
         } >> "$GITHUB_OUTPUT"
+
+        # Deterministic pass/fail from the structured report. report.json is written only
+        # when the pipeline produced an assessment; its `not_assessed` array lists any vuln
+        # classes that could not be assessed. Pass only on a complete assessment: a failed
+        # scan (no report) or a partial one (some classes not assessed) fails the job.
+        REPORT_JSON="$WS_DIR/.shannon/deliverables/report.json"
+        if [ "$RC" -ne 0 ] || [ ! -f "$REPORT_JSON" ]; then
+          echo "::error title=Shannon scan failed::The scan did not produce a report."
+          exit 1
+        fi
+
+        NOT_ASSESSED=$(node -e 'try{const d=require(process.argv[1]);process.stdout.write((d.not_assessed||[]).join(", "))}catch(e){process.exit(3)}' "$REPORT_JSON")
+        if [ -n "$NOT_ASSESSED" ]; then
+          echo "::error title=Shannon partial scan::These vulnerability classes were not assessed: ${NOT_ASSESSED}. Absence of findings for them does not mean they are clean."
+          exit 1
+        fi
+
+        echo "Shannon scan completed — all vulnerability classes were assessed."
 
     - name: Upload report artifact
       if: ${{ always() && inputs.upload-artifact == 'true' && steps.scan.outputs.workspace-dir != '' }}
