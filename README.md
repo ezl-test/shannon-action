@@ -35,7 +35,10 @@ jobs:
           api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-The scan runs to completion (`--follow`) and the job **fails if the pipeline fails**. The report (PDF + Markdown) is uploaded as a workflow artifact named `shannon-report-<workspace>` by default.
+The scan runs to completion (`--follow`) and the job **fails if the pipeline fails**. Two artifacts are uploaded by default:
+
+- `shannon-report-<workspace>` — just the report (PDF + Markdown, and SARIF if produced).
+- `shannon-workspace-<workspace>` — the full workspace (logs, agent transcripts, deliverables, browser artifacts) for debugging, uploaded even on failure. The target's saved auth session (`auth-state.json`) is excluded.
 
 ## Inputs
 
@@ -50,7 +53,7 @@ The scan runs to completion (`--follow`) and the job **fails if the pipeline fai
 | `api-key` | | — | LLM provider API key (`SHANNON_AI_API_KEY`) for any non-Bedrock provider, including the default Anthropic model. |
 | `version` | | `latest` | Version of the `@keygraph/shannon` npm package to run. |
 | `pipeline-testing` | | `false` | Minimal prompts for fast pipeline testing. |
-| `upload-artifact` | | `true` | Upload the report (PDF + Markdown, and SARIF if produced) as an artifact named `shannon-report-<workspace>`. |
+| `upload-artifact` | | `true` | Upload two artifacts: `shannon-report-<workspace>` (report only) and `shannon-workspace-<workspace>` (full workspace for debugging, minus `auth-state.json`). |
 
 ## Outputs
 

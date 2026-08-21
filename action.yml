@@ -90,6 +90,11 @@ runs:
         [ -n "$IN_MODEL" ]    && export SHANNON_AI_MODEL="$IN_MODEL"
         [ -n "$IN_BASE_URL" ] && export SHANNON_AI_BASE_URL="$IN_BASE_URL"
 
+        # In npx mode the workspace lives under ~/.shannon/workspaces/<name>. Publish
+        # the path up front so the workspace upload works even if the scan fails.
+        WS_DIR="$HOME/.shannon/workspaces/$IN_WORKSPACE"
+        echo "workspace-dir=$WS_DIR" >> "$GITHUB_OUTPUT"
+
         # Build the argument list. -w is always passed so the output path is deterministic.
         ARGS=(start -u "$IN_URL" -r "$IN_REPO" -w "$IN_WORKSPACE" --follow)
         [ -n "$IN_CONFIG" ] && ARGS+=(-c "$IN_CONFIG")
@@ -99,10 +104,8 @@ runs:
         npx --yes "@keygraph/shannon@${IN_VERSION}" "${ARGS[@]}"
         echo "::endgroup::"
 
-        # Resolve outputs. In npx mode the workspace lives under ~/.shannon/workspaces/<name>.
-        WS_DIR="$HOME/.shannon/workspaces/$IN_WORKSPACE"
+        # Resolve report outputs (only present on a successful run).
         {
-          echo "workspace-dir=$WS_DIR"
           [ -f "$WS_DIR/Security-Assessment-Report.pdf" ] && echo "report-pdf=$WS_DIR/Security-Assessment-Report.pdf"
           [ -f "$WS_DIR/Security-Assessment-Report.md" ]  && echo "report-md=$WS_DIR/Security-Assessment-Report.md"
           [ -f "$WS_DIR/report.sarif" ]                   && echo "sarif=$WS_DIR/report.sarif"
@@ -117,6 +120,17 @@ runs:
           ${{ steps.scan.outputs.workspace-dir }}/Security-Assessment-Report.pdf
           ${{ steps.scan.outputs.workspace-dir }}/Security-Assessment-Report.md
           ${{ steps.scan.outputs.workspace-dir }}/report.sarif
+        if-no-files-found: warn
+
+    - name: Upload full workspace artifact
+      if: ${{ always() && inputs.upload-artifact == 'true' && steps.scan.outputs.workspace-dir != '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: shannon-workspace-${{ inputs.workspace }}
+        path: |
+          ${{ steps.scan.outputs.workspace-dir }}/**
+          !${{ steps.scan.outputs.workspace-dir }}/.shannon/auth-state.json
+        include-hidden-files: true
         if-no-files-found: warn
 
     - name: Upload SARIF to code scanning
