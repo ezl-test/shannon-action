@@ -42,10 +42,6 @@ inputs:
     description: 'Run with minimal prompts for fast pipeline testing.'
     required: false
     default: 'false'
-  extra-args:
-    description: 'Additional raw arguments appended to `shannon start` (space-separated).'
-    required: false
-    default: ''
   upload-artifact:
     description: 'Upload the workspace (report + logs) as a workflow artifact.'
     required: false
@@ -97,7 +93,6 @@ runs:
         IN_WORKSPACE: ${{ inputs.workspace }}
         IN_VERSION: ${{ inputs.version }}
         IN_PIPELINE_TESTING: ${{ inputs.pipeline-testing }}
-        IN_EXTRA_ARGS: ${{ inputs.extra-args }}
       run: |
         set -euo pipefail
 
@@ -110,11 +105,6 @@ runs:
         ARGS=(start -u "$IN_URL" -r "$IN_REPO" -w "$IN_WORKSPACE" --follow)
         [ -n "$IN_CONFIG" ] && ARGS+=(-c "$IN_CONFIG")
         [ "$IN_PIPELINE_TESTING" = "true" ] && ARGS+=(--pipeline-testing)
-        if [ -n "$IN_EXTRA_ARGS" ]; then
-          # shellcheck disable=SC2206
-          EXTRA=($IN_EXTRA_ARGS)
-          ARGS+=("${EXTRA[@]}")
-        fi
 
         echo "::group::shannon start"
         npx --yes "@keygraph/shannon@${IN_VERSION}" "${ARGS[@]}"
