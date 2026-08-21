@@ -43,13 +43,9 @@ inputs:
     required: false
     default: 'false'
   upload-artifact:
-    description: 'Upload the workspace (report + logs) as a workflow artifact.'
+    description: 'Upload the workspace (report + logs) as a workflow artifact named shannon-report-<workspace>.'
     required: false
     default: 'true'
-  artifact-name:
-    description: 'Name of the uploaded artifact.'
-    required: false
-    default: 'shannon-report'
   upload-sarif:
     description: 'Upload report.sarif to GitHub code scanning (requires exploit + report.sarif enabled in config, and security-events: write permission).'
     required: false
@@ -123,7 +119,7 @@ runs:
       if: ${{ always() && inputs.upload-artifact == 'true' && steps.scan.outputs.workspace-dir != '' }}
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.artifact-name }}
+        name: shannon-report-${{ inputs.workspace }}
         path: ${{ steps.scan.outputs.workspace-dir }}
         if-no-files-found: warn
 

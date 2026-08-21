@@ -50,8 +50,7 @@ The scan runs to completion (`--follow`) and the job **fails if the pipeline fai
 | `api-key` | | — | LLM provider API key (`SHANNON_AI_API_KEY`) for any non-Bedrock provider, including the default Anthropic model. |
 | `version` | | `latest` | Version of the `@keygraph/shannon` npm package to run. |
 | `pipeline-testing` | | `false` | Minimal prompts for fast pipeline testing. |
-| `upload-artifact` | | `true` | Upload the workspace (report + logs) as an artifact. |
-| `artifact-name` | | `shannon-report` | Name of the uploaded artifact. |
+| `upload-artifact` | | `true` | Upload the workspace (report + logs) as an artifact named `shannon-report-<workspace>`. |
 | `upload-sarif` | | `false` | Upload `report.sarif` to code scanning (needs exploit + `report.sarif` in config). |
 
 ## Outputs
