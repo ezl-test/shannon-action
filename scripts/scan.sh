@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+#
+# Runs a Shannon scan and decides the job outcome from the produced report.
+#
+# Inputs arrive as IN_* environment variables (mapped by action.yml); outputs are
+# written to $GITHUB_OUTPUT. Exits 0 only on a complete assessment — a failed scan
+# (no report) or a partial one (some vulnerability classes not assessed) exits non-zero.
+
+# No -e: the scan's exit code is captured and classified, so a failed scan must not abort the script.
+set -uo pipefail
+
+# In npx mode the workspace lives under ~/.shannon/workspaces/<name>.
+WS_DIR="$HOME/.shannon/workspaces/$IN_WORKSPACE"
+REPORT_JSON="$WS_DIR/.shannon/deliverables/report.json"
+
+# Export only the provider settings that were supplied.
+export_credentials() {
+  [ -n "$IN_API_KEY" ]                  && export SHANNON_AI_API_KEY="$IN_API_KEY"
+  [ -n "$IN_MODEL" ]                    && export SHANNON_AI_MODEL="$IN_MODEL"
+  [ -n "$IN_BASE_URL" ]                 && export SHANNON_AI_BASE_URL="$IN_BASE_URL"
+  [ -n "$IN_OPENAI_FORMAT" ]            && export SHANNON_AI_OPENAI_FORMAT="$IN_OPENAI_FORMAT"
+  [ -n "$IN_AWS_BEARER_TOKEN_BEDROCK" ] && export AWS_BEARER_TOKEN_BEDROCK="$IN_AWS_BEARER_TOKEN_BEDROCK"
+  [ -n "$IN_AWS_REGION" ]               && export AWS_REGION="$IN_AWS_REGION"
+  return 0
+}
+
+run_scan() {
+  # -w is always passed so the workspace path is deterministic.
+  local args=(start -u "$IN_URL" -r "$IN_REPO" -w "$IN_WORKSPACE" --follow)
+  [ -n "$IN_CONFIG" ] && args+=(-c "$IN_CONFIG")
+  [ "$IN_PIPELINE_TESTING" = "true" ] && args+=(--pipeline-testing)
+
+  echo "Running: shannon ${args[*]}"
+  npx --yes "@keygraph/shannon@${IN_VERSION}" "${args[@]}"
+}
+
+publish_report_outputs() {
+  {
+    [ -f "$WS_DIR/Security-Assessment-Report.pdf" ] && echo "report-pdf=$WS_DIR/Security-Assessment-Report.pdf"
+    [ -f "$WS_DIR/Security-Assessment-Report.md" ]  && echo "report-md=$WS_DIR/Security-Assessment-Report.md"
+    [ -f "$WS_DIR/report.sarif" ]                   && echo "sarif=$WS_DIR/report.sarif"
+  } >> "$GITHUB_OUTPUT"
+}
+
+# The classes report.json marks not assessed, comma-separated (empty if none).
+not_assessed_classes() {
+  node -e 'try{const d=require(process.argv[1]);process.stdout.write((d.not_assessed||[]).join(", "))}catch(e){process.exit(3)}' "$REPORT_JSON"
+}
+
+main() {
+  export_credentials
+
+  # Published up front so the workspace upload works even when the scan fails.
+  echo "workspace-dir=$WS_DIR" >> "$GITHUB_OUTPUT"
+
+  run_scan
+  local rc=$?
+
+  publish_report_outputs
+
+  # report.json exists only when the pipeline produced an assessment; its not_assessed
+  # array lists the classes that could not be assessed. Pass only on a complete one.
+  if [ "$rc" -ne 0 ] || [ ! -f "$REPORT_JSON" ]; then
+    echo "::error title=Shannon scan failed::The scan did not produce a report."
+    exit 1
+  fi
+
+  local not_assessed
+  not_assessed="$(not_assessed_classes)"
+  if [ -n "$not_assessed" ]; then
+    echo "::error title=Shannon partial scan::These vulnerability classes were not assessed: ${not_assessed}. Absence of findings for them does not mean they are clean."
+    exit 1
+  fi
+
+  echo "Shannon scan completed — all vulnerability classes were assessed."
+}
+
+main "$@"

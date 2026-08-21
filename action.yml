@@ -97,57 +97,7 @@ runs:
         IN_WORKSPACE: ${{ inputs.workspace }}
         IN_VERSION: ${{ inputs.version }}
         IN_PIPELINE_TESTING: ${{ inputs.pipeline-testing }}
-      run: |
-        # No `set -e`: the scan's exit code is captured and used to decide pass/fail,
-        # so the script must continue past a failed scan rather than abort on it.
-        set -uo pipefail
-
-        # Export only the values that were provided.
-        [ -n "$IN_API_KEY" ]       && export SHANNON_AI_API_KEY="$IN_API_KEY"
-        [ -n "$IN_MODEL" ]         && export SHANNON_AI_MODEL="$IN_MODEL"
-        [ -n "$IN_BASE_URL" ]      && export SHANNON_AI_BASE_URL="$IN_BASE_URL"
-        [ -n "$IN_OPENAI_FORMAT" ] && export SHANNON_AI_OPENAI_FORMAT="$IN_OPENAI_FORMAT"
-        [ -n "$IN_AWS_BEARER_TOKEN_BEDROCK" ] && export AWS_BEARER_TOKEN_BEDROCK="$IN_AWS_BEARER_TOKEN_BEDROCK"
-        [ -n "$IN_AWS_REGION" ]    && export AWS_REGION="$IN_AWS_REGION"
-
-        # In npx mode the workspace lives under ~/.shannon/workspaces/<name>. Publish
-        # the path up front so the workspace upload works even if the scan fails.
-        WS_DIR="$HOME/.shannon/workspaces/$IN_WORKSPACE"
-        echo "workspace-dir=$WS_DIR" >> "$GITHUB_OUTPUT"
-
-        # Build the argument list. -w is always passed so the output path is deterministic.
-        ARGS=(start -u "$IN_URL" -r "$IN_REPO" -w "$IN_WORKSPACE" --follow)
-        [ -n "$IN_CONFIG" ] && ARGS+=(-c "$IN_CONFIG")
-        [ "$IN_PIPELINE_TESTING" = "true" ] && ARGS+=(--pipeline-testing)
-
-        echo "Running: shannon ${ARGS[*]}"
-        npx --yes "@keygraph/shannon@${IN_VERSION}" "${ARGS[@]}"
-        RC=$?
-
-        # Resolve report outputs (only present when the scan produced a report).
-        {
-          [ -f "$WS_DIR/Security-Assessment-Report.pdf" ] && echo "report-pdf=$WS_DIR/Security-Assessment-Report.pdf"
-          [ -f "$WS_DIR/Security-Assessment-Report.md" ]  && echo "report-md=$WS_DIR/Security-Assessment-Report.md"
-          [ -f "$WS_DIR/report.sarif" ]                   && echo "sarif=$WS_DIR/report.sarif"
-        } >> "$GITHUB_OUTPUT"
-
-        # Deterministic pass/fail from the structured report. report.json is written only
-        # when the pipeline produced an assessment; its `not_assessed` array lists any vuln
-        # classes that could not be assessed. Pass only on a complete assessment: a failed
-        # scan (no report) or a partial one (some classes not assessed) fails the job.
-        REPORT_JSON="$WS_DIR/.shannon/deliverables/report.json"
-        if [ "$RC" -ne 0 ] || [ ! -f "$REPORT_JSON" ]; then
-          echo "::error title=Shannon scan failed::The scan did not produce a report."
-          exit 1
-        fi
-
-        NOT_ASSESSED=$(node -e 'try{const d=require(process.argv[1]);process.stdout.write((d.not_assessed||[]).join(", "))}catch(e){process.exit(3)}' "$REPORT_JSON")
-        if [ -n "$NOT_ASSESSED" ]; then
-          echo "::error title=Shannon partial scan::These vulnerability classes were not assessed: ${NOT_ASSESSED}. Absence of findings for them does not mean they are clean."
-          exit 1
-        fi
-
-        echo "Shannon scan completed — all vulnerability classes were assessed."
+      run: bash "$GITHUB_ACTION_PATH/scripts/scan.sh"
 
     - name: Upload report artifact
       if: ${{ always() && inputs.upload-artifact == 'true' && steps.scan.outputs.workspace-dir != '' }}
