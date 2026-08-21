@@ -4,7 +4,7 @@
 #
 # Inputs arrive as IN_* environment variables (mapped by action.yml); outputs are
 # written to $GITHUB_OUTPUT and a findings summary to $GITHUB_STEP_SUMMARY. Exits 0
-# only on a complete assessment — a failed scan (no report) or a partial one (some
+# only on a complete assessment - a failed scan (no report) or a partial one (some
 # vulnerability classes not assessed) exits non-zero.
 
 # No -e: the scan's exit code is captured and classified, so a failed scan must not abort the script.
@@ -49,7 +49,7 @@ not_assessed_classes() {
 }
 
 # Fail if any exploited finding meets the fail-on-severity threshold. Only findings with
-# status "exploited" count — a demonstrated vulnerability — so analysis-only scans (which
+# status "exploited" count - a demonstrated vulnerability - so analysis-only scans (which
 # have no exploited findings) never trip this gate.
 severity_gate() {
   case "$IN_FAIL_ON_SEVERITY" in
@@ -79,7 +79,7 @@ severity_gate() {
 write_summary() {
   local outcome="$1" not_assessed="$2"
   {
-    echo "## Shannon scan — $outcome"
+    echo "## Shannon scan - $outcome"
     echo ""
     echo "Target: \`$IN_URL\`"
     echo ""
@@ -140,7 +140,7 @@ main() {
 
   severity_gate
 
-  echo "Shannon scan completed — all vulnerability classes were assessed."
+  echo "Shannon scan completed - all vulnerability classes were assessed."
 }
 
 main "$@"
