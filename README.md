@@ -44,7 +44,7 @@ The scan runs to completion (`--follow`). The job **passes only on a complete as
 
 | Input | Required | Default | Description |
 |---|---|---|---|
-| `url` | ✅ | — | Target URL to test (the running application). |
+| `url` | yes | — | Target URL to test (the running application). |
 | `repo` | | `${{ github.workspace }}` | Path to the source repo to analyze (white-box). |
 | `config` | | — | Path to a Shannon YAML config (auth, scope, report options). |
 | `workspace` | | `shannon-ci` | Named workspace; sets the output dir and enables resume. |
