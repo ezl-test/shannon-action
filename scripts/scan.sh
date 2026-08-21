@@ -47,6 +47,31 @@ not_assessed_classes() {
   node -e 'try{const d=require(process.argv[1]);process.stdout.write((d.not_assessed||[]).join(", "))}catch(e){process.exit(3)}' "$REPORT_JSON"
 }
 
+# Fail if any exploited finding meets the fail-on-severity threshold. Only findings with
+# status "exploited" count — a demonstrated vulnerability — so analysis-only scans (which
+# have no exploited findings) never trip this gate.
+severity_gate() {
+  case "$IN_FAIL_ON_SEVERITY" in
+    ''|none) return 0 ;;
+    low|medium|high|critical) ;;
+    *) echo "::error title=Shannon config error::Invalid fail-on-severity '$IN_FAIL_ON_SEVERITY' (expected none, low, medium, high, or critical)."; exit 1 ;;
+  esac
+
+  local offending
+  offending="$(node -e '
+    const d = require(process.argv[1]);
+    const rank = { critical: 4, high: 3, medium: 2, low: 1 };
+    const threshold = rank[process.argv[2]];
+    const hit = (d.findings || []).filter((f) => f.status === "exploited" && (rank[f.severity] || 0) >= threshold);
+    process.stdout.write(hit.map((f) => `${f.finding_id || "finding"} (${f.severity})`).join(", "));
+  ' "$REPORT_JSON" "$IN_FAIL_ON_SEVERITY")"
+
+  if [ -n "$offending" ]; then
+    echo "::error title=Shannon severity gate::Exploited findings at or above '$IN_FAIL_ON_SEVERITY' severity: ${offending}."
+    exit 1
+  fi
+}
+
 main() {
   export_credentials
 
@@ -71,6 +96,8 @@ main() {
     echo "::error title=Shannon partial scan::These vulnerability classes were not assessed: ${not_assessed}. Absence of findings for them does not mean they are clean."
     exit 1
   fi
+
+  severity_gate
 
   echo "Shannon scan completed — all vulnerability classes were assessed."
 }

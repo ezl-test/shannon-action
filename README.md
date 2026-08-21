@@ -56,6 +56,7 @@ The scan runs to completion (`--follow`). The job **passes only on a complete as
 | `aws-region` | | — | AWS region for Bedrock (`AWS_REGION`). Required for `model: amazon-bedrock:...`. |
 | `version` | | `latest` | Version of the `@keygraph/shannon` npm package to run. |
 | `pipeline-testing` | | `false` | Minimal prompts for fast pipeline testing. |
+| `fail-on-severity` | | `none` | Fail the job if any **exploited** finding is at or above this severity: `none`, `low`, `medium`, `high`, `critical`. See [Severity gating](#severity-gating). |
 | `upload-artifact` | | `true` | Upload two artifacts: `shannon-report-<workspace>` (report only) and `shannon-workspace-<workspace>` (full workspace for debugging, minus `auth-state.json`). |
 
 ## Outputs
@@ -121,6 +122,19 @@ with:
 ```
 
 If the config does not request SARIF, this step is skipped.
+
+## Severity gating
+
+By default the job's pass/fail is decided only by whether the scan completed (see above). To also fail on demonstrated impact, set `fail-on-severity`:
+
+```yaml
+with:
+  fail-on-severity: high   # fail if any exploited finding is high or critical
+```
+
+The gate counts **only findings Shannon actually exploited** (`status: exploited`) — a proven vulnerability, not a suspicion — so it needs no confidence threshold and rarely fires on false positives. Severities rank `critical > high > medium > low`; a finding fails the job when its severity is at or above the threshold.
+
+Because it keys on exploited findings, this gate applies to **exploit-mode scans only**. An analysis-only scan (`exploit: false`) has no exploited findings, so `fail-on-severity` never trips regardless of severity.
 
 ## Notes
 

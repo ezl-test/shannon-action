@@ -54,6 +54,10 @@ inputs:
     description: 'Run with minimal prompts for fast pipeline testing.'
     required: false
     default: 'false'
+  fail-on-severity:
+    description: 'Fail the job if any exploited finding is at or above this severity: none (default), low, medium, high, or critical. Only exploited findings count, so this applies only to exploit-mode scans.'
+    required: false
+    default: 'none'
   upload-artifact:
     description: 'Upload the workspace (report + logs) as a workflow artifact named shannon-report-<workspace>.'
     required: false
@@ -97,6 +101,7 @@ runs:
         IN_WORKSPACE: ${{ inputs.workspace }}
         IN_VERSION: ${{ inputs.version }}
         IN_PIPELINE_TESTING: ${{ inputs.pipeline-testing }}
+        IN_FAIL_ON_SEVERITY: ${{ inputs.fail-on-severity }}
       run: bash "$GITHUB_ACTION_PATH/scripts/scan.sh"
 
     - name: Upload report artifact
