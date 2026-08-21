@@ -1,0 +1,38 @@
+# Example consumer workflow — copy into a repo's .github/workflows/
+name: Shannon security scan
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 3 * * 1'   # weekly, Mondays 03:00 UTC
+
+permissions:
+  contents: read
+  security-events: write   # only needed if upload-sarif: true
+
+jobs:
+  pentest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Bring up the target app so Shannon has a live URL to test.
+      # Replace with however your app starts.
+      - name: Start app
+        run: |
+          docker compose up -d
+          npx --yes wait-on http://localhost:3000 --timeout 120000
+
+      - name: Run Shannon
+        id: shannon
+        uses: KeygraphHQ/shannon-action@v1
+        with:
+          url: http://localhost:3000
+          repo: ${{ github.workspace }}
+          config: .shannon/ci.yaml        # optional
+          upload-sarif: true              # optional
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Show report path
+        if: always()
+        run: 'echo "Report: ${{ steps.shannon.outputs.report-pdf }}"'

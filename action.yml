@@ -1,0 +1,160 @@
+name: 'Shannon Pentest'
+description: 'Run Shannon, the autonomous white-box AI pentester, against a target URL and repository.'
+author: 'Keygraph'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  url:
+    description: 'Target URL to test (the running application).'
+    required: true
+  repo:
+    description: 'Path to the source repository to analyze (white-box). Defaults to the checked-out workspace.'
+    required: false
+    default: ${{ github.workspace }}
+  config:
+    description: 'Path to a Shannon YAML config file (auth, scope, report options).'
+    required: false
+    default: ''
+  workspace:
+    description: 'Named workspace. Determines the output directory and enables resume. Keep stable to resume a scan.'
+    required: false
+    default: 'shannon-ci'
+  output:
+    description: 'Extra directory to copy deliverables into after the run (in addition to the workspace).'
+    required: false
+    default: ''
+  model:
+    description: 'Model spec as <provider>:<model-id> (SHANNON_AI_MODEL). Defaults to anthropic:claude-sonnet-4-6.'
+    required: false
+    default: ''
+  base-url:
+    description: 'Override the provider endpoint (SHANNON_AI_BASE_URL) for a proxy/gateway.'
+    required: false
+    default: ''
+  anthropic-api-key:
+    description: 'Anthropic API key (ANTHROPIC_API_KEY). Used by the default model.'
+    required: false
+    default: ''
+  api-key:
+    description: 'Generic provider API key (SHANNON_AI_API_KEY). Works for any provider named by `model` whose credential is a plain API key (not Bedrock).'
+    required: false
+    default: ''
+  version:
+    description: 'Version of the @keygraph/shannon npm package to run.'
+    required: false
+    default: 'latest'
+  node-version:
+    description: 'Node.js version to set up for running the CLI (requires >= 18).'
+    required: false
+    default: '20'
+  pipeline-testing:
+    description: 'Run with minimal prompts for fast pipeline testing.'
+    required: false
+    default: 'false'
+  extra-args:
+    description: 'Additional raw arguments appended to `shannon start` (space-separated).'
+    required: false
+    default: ''
+  upload-artifact:
+    description: 'Upload the workspace (report + logs) as a workflow artifact.'
+    required: false
+    default: 'true'
+  artifact-name:
+    description: 'Name of the uploaded artifact.'
+    required: false
+    default: 'shannon-report'
+  upload-sarif:
+    description: 'Upload report.sarif to GitHub code scanning (requires exploit + report.sarif enabled in config, and security-events: write permission).'
+    required: false
+    default: 'false'
+
+outputs:
+  workspace-dir:
+    description: 'Absolute path to the scan workspace directory.'
+    value: ${{ steps.scan.outputs.workspace-dir }}
+  report-pdf:
+    description: 'Path to Security-Assessment-Report.pdf, if produced.'
+    value: ${{ steps.scan.outputs.report-pdf }}
+  report-md:
+    description: 'Path to Security-Assessment-Report.md, if produced.'
+    value: ${{ steps.scan.outputs.report-md }}
+  sarif:
+    description: 'Path to report.sarif, if produced.'
+    value: ${{ steps.scan.outputs.sarif }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Run Shannon
+      id: scan
+      shell: bash
+      env:
+        # Passed in via separate names so we can export the real credential
+        # variable only when non-empty — an empty ANTHROPIC_API_KEY/etc. would
+        # otherwise trip Shannon's "exactly one provider configured" guard.
+        IN_ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        IN_API_KEY: ${{ inputs.api-key }}
+        IN_MODEL: ${{ inputs.model }}
+        IN_BASE_URL: ${{ inputs.base-url }}
+        IN_URL: ${{ inputs.url }}
+        IN_REPO: ${{ inputs.repo }}
+        IN_CONFIG: ${{ inputs.config }}
+        IN_WORKSPACE: ${{ inputs.workspace }}
+        IN_OUTPUT: ${{ inputs.output }}
+        IN_VERSION: ${{ inputs.version }}
+        IN_PIPELINE_TESTING: ${{ inputs.pipeline-testing }}
+        IN_EXTRA_ARGS: ${{ inputs.extra-args }}
+      run: |
+        set -euo pipefail
+
+        # Export only the credentials that were provided.
+        [ -n "$IN_ANTHROPIC_API_KEY" ] && export ANTHROPIC_API_KEY="$IN_ANTHROPIC_API_KEY"
+        [ -n "$IN_API_KEY" ]           && export SHANNON_AI_API_KEY="$IN_API_KEY"
+        [ -n "$IN_MODEL" ]             && export SHANNON_AI_MODEL="$IN_MODEL"
+        [ -n "$IN_BASE_URL" ]          && export SHANNON_AI_BASE_URL="$IN_BASE_URL"
+
+        # Build the argument list. -w is always passed so the output path is deterministic.
+        ARGS=(start -u "$IN_URL" -r "$IN_REPO" -w "$IN_WORKSPACE" --follow)
+        [ -n "$IN_CONFIG" ] && ARGS+=(-c "$IN_CONFIG")
+        [ -n "$IN_OUTPUT" ] && ARGS+=(-o "$IN_OUTPUT")
+        [ "$IN_PIPELINE_TESTING" = "true" ] && ARGS+=(--pipeline-testing)
+        if [ -n "$IN_EXTRA_ARGS" ]; then
+          # shellcheck disable=SC2206
+          EXTRA=($IN_EXTRA_ARGS)
+          ARGS+=("${EXTRA[@]}")
+        fi
+
+        echo "::group::shannon start"
+        npx --yes "@keygraph/shannon@${IN_VERSION}" "${ARGS[@]}"
+        echo "::endgroup::"
+
+        # Resolve outputs. In npx mode the workspace lives under ~/.shannon/workspaces/<name>.
+        WS_DIR="$HOME/.shannon/workspaces/$IN_WORKSPACE"
+        {
+          echo "workspace-dir=$WS_DIR"
+          [ -f "$WS_DIR/Security-Assessment-Report.pdf" ] && echo "report-pdf=$WS_DIR/Security-Assessment-Report.pdf"
+          [ -f "$WS_DIR/Security-Assessment-Report.md" ]  && echo "report-md=$WS_DIR/Security-Assessment-Report.md"
+          [ -f "$WS_DIR/report.sarif" ]                   && echo "sarif=$WS_DIR/report.sarif"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Upload report artifact
+      if: ${{ always() && inputs.upload-artifact == 'true' && steps.scan.outputs.workspace-dir != '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.scan.outputs.workspace-dir }}
+        if-no-files-found: warn
+
+    - name: Upload SARIF to code scanning
+      if: ${{ inputs.upload-sarif == 'true' && steps.scan.outputs.sarif != '' }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
