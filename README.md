@@ -32,7 +32,7 @@ jobs:
         with:
           url: http://localhost:3000
           repo: ${{ github.workspace }}
-          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 The scan runs to completion (`--follow`) and the job **fails if the pipeline fails**. The report is uploaded as a workflow artifact named `shannon-report` by default.
@@ -45,13 +45,10 @@ The scan runs to completion (`--follow`) and the job **fails if the pipeline fai
 | `repo` | | `${{ github.workspace }}` | Path to the source repo to analyze (white-box). |
 | `config` | | — | Path to a Shannon YAML config (auth, scope, report options). |
 | `workspace` | | `shannon-ci` | Named workspace; sets the output dir and enables resume. |
-| `output` | | — | Extra directory to copy deliverables into after the run. |
 | `model` | | `anthropic:claude-sonnet-4-6` | Model spec `<provider>:<model-id>` (`SHANNON_AI_MODEL`). |
 | `base-url` | | — | Override the provider endpoint (`SHANNON_AI_BASE_URL`). |
-| `anthropic-api-key` | | — | Anthropic API key (used by the default model). |
-| `api-key` | | — | Generic provider key (`SHANNON_AI_API_KEY`) for any non-Bedrock provider. |
+| `api-key` | | — | LLM provider API key (`SHANNON_AI_API_KEY`) for any non-Bedrock provider, including the default Anthropic model. |
 | `version` | | `latest` | Version of the `@keygraph/shannon` npm package to run. |
-| `node-version` | | `20` | Node.js version to set up. |
 | `pipeline-testing` | | `false` | Minimal prompts for fast pipeline testing. |
 | `extra-args` | | — | Raw args appended to `shannon start`. |
 | `upload-artifact` | | `true` | Upload the workspace (report + logs) as an artifact. |
@@ -69,14 +66,14 @@ The scan runs to completion (`--follow`) and the job **fails if the pipeline fai
 
 ## Credentials
 
-Provide exactly one provider's credential. The simplest is Anthropic (matches the default model):
+Pass your LLM provider's API key via `api-key`. With the default model (`anthropic:claude-sonnet-4-6`) that's your Anthropic key:
 
 ```yaml
 with:
-  anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+  api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-For any other provider whose credential is a plain API key, use the generic key plus a model spec:
+For any other provider, set `model` and pass that provider's key through the same input:
 
 ```yaml
 with:
@@ -84,7 +81,7 @@ with:
   api-key: ${{ secrets.OPENAI_API_KEY }}
 ```
 
-> Amazon Bedrock (which authenticates via `AWS_BEARER_TOKEN_BEDROCK` + `AWS_REGION`) is not yet exposed as dedicated inputs — open an issue if you need it.
+> Amazon Bedrock (which authenticates via `AWS_BEARER_TOKEN_BEDROCK` + `AWS_REGION`, not a plain API key) is not supported through `api-key` — open an issue if you need it.
 
 ## SARIF / code scanning
 
@@ -97,7 +94,7 @@ permissions:
 with:
   config: .shannon/ci.yaml
   upload-sarif: true
-  anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+  api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 ## Notes

@@ -22,10 +22,6 @@ inputs:
     description: 'Named workspace. Determines the output directory and enables resume. Keep stable to resume a scan.'
     required: false
     default: 'shannon-ci'
-  output:
-    description: 'Extra directory to copy deliverables into after the run (in addition to the workspace).'
-    required: false
-    default: ''
   model:
     description: 'Model spec as <provider>:<model-id> (SHANNON_AI_MODEL). Defaults to anthropic:claude-sonnet-4-6.'
     required: false
@@ -34,22 +30,14 @@ inputs:
     description: 'Override the provider endpoint (SHANNON_AI_BASE_URL) for a proxy/gateway.'
     required: false
     default: ''
-  anthropic-api-key:
-    description: 'Anthropic API key (ANTHROPIC_API_KEY). Used by the default model.'
-    required: false
-    default: ''
   api-key:
-    description: 'Generic provider API key (SHANNON_AI_API_KEY). Works for any provider named by `model` whose credential is a plain API key (not Bedrock).'
+    description: 'LLM provider API key (SHANNON_AI_API_KEY). Works for any provider named by `model` whose credential is a plain API key (including the default Anthropic model; not Bedrock).'
     required: false
     default: ''
   version:
     description: 'Version of the @keygraph/shannon npm package to run.'
     required: false
     default: 'latest'
-  node-version:
-    description: 'Node.js version to set up for running the CLI (requires >= 18).'
-    required: false
-    default: '20'
   pipeline-testing:
     description: 'Run with minimal prompts for fast pipeline testing.'
     required: false
@@ -91,16 +79,15 @@ runs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ inputs.node-version }}
+        node-version: '20'
 
     - name: Run Shannon
       id: scan
       shell: bash
       env:
-        # Passed in via separate names so we can export the real credential
-        # variable only when non-empty — an empty ANTHROPIC_API_KEY/etc. would
-        # otherwise trip Shannon's "exactly one provider configured" guard.
-        IN_ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        # Passed in via separate names so we export the real variable only when
+        # non-empty. SHANNON_AI_API_KEY is provider-neutral, so it never trips
+        # Shannon's "exactly one provider configured" guard.
         IN_API_KEY: ${{ inputs.api-key }}
         IN_MODEL: ${{ inputs.model }}
         IN_BASE_URL: ${{ inputs.base-url }}
@@ -108,23 +95,20 @@ runs:
         IN_REPO: ${{ inputs.repo }}
         IN_CONFIG: ${{ inputs.config }}
         IN_WORKSPACE: ${{ inputs.workspace }}
-        IN_OUTPUT: ${{ inputs.output }}
         IN_VERSION: ${{ inputs.version }}
         IN_PIPELINE_TESTING: ${{ inputs.pipeline-testing }}
         IN_EXTRA_ARGS: ${{ inputs.extra-args }}
       run: |
         set -euo pipefail
 
-        # Export only the credentials that were provided.
-        [ -n "$IN_ANTHROPIC_API_KEY" ] && export ANTHROPIC_API_KEY="$IN_ANTHROPIC_API_KEY"
-        [ -n "$IN_API_KEY" ]           && export SHANNON_AI_API_KEY="$IN_API_KEY"
-        [ -n "$IN_MODEL" ]             && export SHANNON_AI_MODEL="$IN_MODEL"
-        [ -n "$IN_BASE_URL" ]          && export SHANNON_AI_BASE_URL="$IN_BASE_URL"
+        # Export only the values that were provided.
+        [ -n "$IN_API_KEY" ]  && export SHANNON_AI_API_KEY="$IN_API_KEY"
+        [ -n "$IN_MODEL" ]    && export SHANNON_AI_MODEL="$IN_MODEL"
+        [ -n "$IN_BASE_URL" ] && export SHANNON_AI_BASE_URL="$IN_BASE_URL"
 
         # Build the argument list. -w is always passed so the output path is deterministic.
         ARGS=(start -u "$IN_URL" -r "$IN_REPO" -w "$IN_WORKSPACE" --follow)
         [ -n "$IN_CONFIG" ] && ARGS+=(-c "$IN_CONFIG")
-        [ -n "$IN_OUTPUT" ] && ARGS+=(-o "$IN_OUTPUT")
         [ "$IN_PIPELINE_TESTING" = "true" ] && ARGS+=(--pipeline-testing)
         if [ -n "$IN_EXTRA_ARGS" ]; then
           # shellcheck disable=SC2206

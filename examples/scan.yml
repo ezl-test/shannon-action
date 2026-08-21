@@ -31,7 +31,7 @@ jobs:
           repo: ${{ github.workspace }}
           config: .shannon/ci.yaml        # optional
           upload-sarif: true              # optional
-          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Show report path
         if: always()
