@@ -1,4 +1,4 @@
-# Scan a published release against production and send findings to code scanning.
+# Scan the staging deployment when a release is published, and send findings to code scanning.
 name: Shannon release scan
 
 on:
@@ -18,7 +18,7 @@ jobs:
       - name: Run Shannon
         uses: KeygraphHQ/shannon-action@v1
         with:
-          url: ${{ vars.PRODUCTION_URL }}
+          url: ${{ vars.STAGING_URL }}
           config: .shannon/full.yaml
           fail-on-severity: high
           upload-sarif: true

@@ -9,6 +9,7 @@ Shannon spins up a local Temporal stack and an ephemeral worker container, drive
 - A runner with **Docker** (daemon + `docker compose` v2) and network access to Docker Hub. `ubuntu-latest` GitHub-hosted runners satisfy this out of the box.
 - **Node.js ≥ 18** (this action sets it up for you).
 - **Do not** run the job inside a `container:` and **do not** invoke via `sudo` — the Shannon CLI refuses to run as root.
+- Point Shannon at a **staging or development** environment you own — it actively exploits vulnerabilities, so it must never target production or systems you are not authorized to test.
 - An AI provider API key (see [Credentials](#credentials)).
 
 ## Usage
@@ -43,7 +44,7 @@ Ready-to-copy workflows in [`examples/`](./examples):
 
 - [`weekly-scan.yml`](./examples/weekly-scan.yml) — scheduled weekly deep scan of a deployed environment, findings sent to code scanning.
 - [`pr-scan.yml`](./examples/pr-scan.yml) — scan a pull request and block it on a demonstrated critical.
-- [`release-scan.yml`](./examples/release-scan.yml) — assess a published release against production.
+- [`release-scan.yml`](./examples/release-scan.yml) — assess the staging deployment when a release is published.
 
 ## Inputs
 
