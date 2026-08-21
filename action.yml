@@ -19,9 +19,9 @@ inputs:
     required: false
     default: ''
   workspace:
-    description: 'Named workspace. Determines the output directory and enables resume. Keep stable to resume a scan.'
+    description: 'Named workspace. Determines the output directory. Defaults to the CI run id, so each run is isolated. Set a stable value to resume a scan across runs.'
     required: false
-    default: 'shannon-ci'
+    default: ${{ github.run_id }}
   model:
     description: 'Model spec as <provider>:<model-id> (SHANNON_AI_MODEL). Defaults to anthropic:claude-sonnet-4-6.'
     required: false

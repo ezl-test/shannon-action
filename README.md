@@ -47,7 +47,7 @@ The scan runs to completion (`--follow`). The job **passes only on a complete as
 | `url` | yes | — | Target URL to test (the running application). |
 | `repo` | | `${{ github.workspace }}` | Path to the source repo to analyze (white-box). |
 | `config` | | — | Path to a Shannon YAML config (auth, scope, report options). |
-| `workspace` | | `shannon-ci` | Named workspace; sets the output dir and enables resume. |
+| `workspace` | | `${{ github.run_id }}` | Named workspace; sets the output dir. Defaults to the run id so each run is isolated. Set a stable value to resume across runs (and to give matrix legs distinct names). |
 | `model` | | `anthropic:claude-sonnet-4-6` | Model spec `<provider>:<model-id>` (`SHANNON_AI_MODEL`). |
 | `base-url` | | — | Override the provider endpoint (`SHANNON_AI_BASE_URL`). |
 | `openai-format` | | `chat-completions` | Wire format for an OpenAI-compatible gateway (`SHANNON_AI_OPENAI_FORMAT`): `chat-completions` or `responses`. Only with `model: openai:...` + `base-url`. |
