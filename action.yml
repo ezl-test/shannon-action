@@ -30,8 +30,20 @@ inputs:
     description: 'Override the provider endpoint (SHANNON_AI_BASE_URL) for a proxy/gateway.'
     required: false
     default: ''
+  openai-format:
+    description: 'Wire format for an OpenAI-compatible gateway (SHANNON_AI_OPENAI_FORMAT): chat-completions (default) or responses. Only applies with model=openai:... and a base-url.'
+    required: false
+    default: ''
   api-key:
     description: 'LLM provider API key (SHANNON_AI_API_KEY). Works for any provider named by `model` whose credential is a plain API key (including the default Anthropic model; not Bedrock).'
+    required: false
+    default: ''
+  aws-bearer-token-bedrock:
+    description: 'Amazon Bedrock bearer token (AWS_BEARER_TOKEN_BEDROCK). Required for model=amazon-bedrock:... along with aws-region.'
+    required: false
+    default: ''
+  aws-region:
+    description: 'AWS region for Amazon Bedrock (AWS_REGION). Required for model=amazon-bedrock:...'
     required: false
     default: ''
   version:
@@ -67,7 +79,7 @@ runs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '22'
 
     - name: Run Shannon
       id: scan
@@ -76,6 +88,9 @@ runs:
         IN_API_KEY: ${{ inputs.api-key }}
         IN_MODEL: ${{ inputs.model }}
         IN_BASE_URL: ${{ inputs.base-url }}
+        IN_OPENAI_FORMAT: ${{ inputs.openai-format }}
+        IN_AWS_BEARER_TOKEN_BEDROCK: ${{ inputs.aws-bearer-token-bedrock }}
+        IN_AWS_REGION: ${{ inputs.aws-region }}
         IN_URL: ${{ inputs.url }}
         IN_REPO: ${{ inputs.repo }}
         IN_CONFIG: ${{ inputs.config }}
@@ -86,9 +101,12 @@ runs:
         set -euo pipefail
 
         # Export only the values that were provided.
-        [ -n "$IN_API_KEY" ]  && export SHANNON_AI_API_KEY="$IN_API_KEY"
-        [ -n "$IN_MODEL" ]    && export SHANNON_AI_MODEL="$IN_MODEL"
-        [ -n "$IN_BASE_URL" ] && export SHANNON_AI_BASE_URL="$IN_BASE_URL"
+        [ -n "$IN_API_KEY" ]       && export SHANNON_AI_API_KEY="$IN_API_KEY"
+        [ -n "$IN_MODEL" ]         && export SHANNON_AI_MODEL="$IN_MODEL"
+        [ -n "$IN_BASE_URL" ]      && export SHANNON_AI_BASE_URL="$IN_BASE_URL"
+        [ -n "$IN_OPENAI_FORMAT" ] && export SHANNON_AI_OPENAI_FORMAT="$IN_OPENAI_FORMAT"
+        [ -n "$IN_AWS_BEARER_TOKEN_BEDROCK" ] && export AWS_BEARER_TOKEN_BEDROCK="$IN_AWS_BEARER_TOKEN_BEDROCK"
+        [ -n "$IN_AWS_REGION" ]    && export AWS_REGION="$IN_AWS_REGION"
 
         # In npx mode the workspace lives under ~/.shannon/workspaces/<name>. Publish
         # the path up front so the workspace upload works even if the scan fails.

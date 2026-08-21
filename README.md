@@ -50,7 +50,10 @@ The scan runs to completion (`--follow`) and the job **fails if the pipeline fai
 | `workspace` | | `shannon-ci` | Named workspace; sets the output dir and enables resume. |
 | `model` | | `anthropic:claude-sonnet-4-6` | Model spec `<provider>:<model-id>` (`SHANNON_AI_MODEL`). |
 | `base-url` | | — | Override the provider endpoint (`SHANNON_AI_BASE_URL`). |
+| `openai-format` | | `chat-completions` | Wire format for an OpenAI-compatible gateway (`SHANNON_AI_OPENAI_FORMAT`): `chat-completions` or `responses`. Only with `model: openai:...` + `base-url`. |
 | `api-key` | | — | LLM provider API key (`SHANNON_AI_API_KEY`) for any non-Bedrock provider, including the default Anthropic model. |
+| `aws-bearer-token-bedrock` | | — | Amazon Bedrock bearer token (`AWS_BEARER_TOKEN_BEDROCK`). Required for `model: amazon-bedrock:...`. |
+| `aws-region` | | — | AWS region for Bedrock (`AWS_REGION`). Required for `model: amazon-bedrock:...`. |
 | `version` | | `latest` | Version of the `@keygraph/shannon` npm package to run. |
 | `pipeline-testing` | | `false` | Minimal prompts for fast pipeline testing. |
 | `upload-artifact` | | `true` | Upload two artifacts: `shannon-report-<workspace>` (report only) and `shannon-workspace-<workspace>` (full workspace for debugging, minus `auth-state.json`). |
@@ -73,7 +76,7 @@ with:
   api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-For any other provider, set `model` and pass that provider's key through the same input:
+For any other plain-API-key provider, set `model` and pass that provider's key through the same input:
 
 ```yaml
 with:
@@ -81,7 +84,28 @@ with:
   api-key: ${{ secrets.OPENAI_API_KEY }}
 ```
 
-> Amazon Bedrock (which authenticates via `AWS_BEARER_TOKEN_BEDROCK` + `AWS_REGION`, not a plain API key) is not supported through `api-key` — open an issue if you need it.
+### Amazon Bedrock
+
+Bedrock authenticates via a bearer token plus a region, not a plain API key, so it has dedicated inputs:
+
+```yaml
+with:
+  model: amazon-bedrock:us.anthropic.claude-sonnet-4-5-20250929-v1:0
+  aws-bearer-token-bedrock: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
+  aws-region: us-east-1
+```
+
+### OpenAI-compatible gateway
+
+Point OpenAI at a proxy/gateway with `base-url`, and pick the wire format if it isn't the default `chat-completions`:
+
+```yaml
+with:
+  model: openai:gpt-5
+  base-url: https://my-gateway.example.com/v1
+  openai-format: responses   # or omit for chat-completions
+  api-key: ${{ secrets.OPENAI_API_KEY }}
+```
 
 ## SARIF / code scanning
 
