@@ -30,7 +30,7 @@ jobs:
           url: http://localhost:3000
           repo: ${{ github.workspace }}
           config: .shannon/ci.yaml        # optional; enable report.sarif here to feed code scanning
-          api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          api-key: ${{ secrets.SHANNON_AI_API_KEY }}
 
       - name: Show report path
         if: always()

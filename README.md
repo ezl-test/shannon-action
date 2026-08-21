@@ -24,15 +24,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Start your app so Shannon has a live URL to test (example).
-      # - run: docker compose up -d && ./scripts/wait-for-ready.sh
-
       - name: Run Shannon
         uses: KeygraphHQ/shannon-action@v1
         with:
           url: http://localhost:3000
           repo: ${{ github.workspace }}
-          api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          api-key: ${{ secrets.SHANNON_AI_API_KEY }}
 ```
 
 The scan runs to completion (`--follow`). The job **passes only on a complete assessment**: it fails if the scan produced no report, or if any vulnerability class could not be assessed (a partial run — because absence of findings for an unassessed class is not a clean result). Two artifacts are uploaded by default:
@@ -70,11 +67,11 @@ The scan runs to completion (`--follow`). The job **passes only on a complete as
 
 ## Credentials
 
-Pass your LLM provider's API key via `api-key`. With the default model (`anthropic:claude-sonnet-4-6`) that's your Anthropic key:
+Pass your LLM provider's API key via `api-key` (it maps to `SHANNON_AI_API_KEY`, which works for any provider the `model` names, including the default):
 
 ```yaml
 with:
-  api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+  api-key: ${{ secrets.SHANNON_AI_API_KEY }}
 ```
 
 For any other plain-API-key provider, set `model` and pass that provider's key through the same input:
@@ -118,7 +115,7 @@ permissions:
 # ...
 with:
   config: .shannon/ci.yaml
-  api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+  api-key: ${{ secrets.SHANNON_AI_API_KEY }}
 ```
 
 If the config does not request SARIF, this step is skipped.
