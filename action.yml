@@ -113,7 +113,10 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: shannon-report-${{ inputs.workspace }}
-        path: ${{ steps.scan.outputs.workspace-dir }}
+        path: |
+          ${{ steps.scan.outputs.workspace-dir }}/Security-Assessment-Report.pdf
+          ${{ steps.scan.outputs.workspace-dir }}/Security-Assessment-Report.md
+          ${{ steps.scan.outputs.workspace-dir }}/report.sarif
         if-no-files-found: warn
 
     - name: Upload SARIF to code scanning
