@@ -55,6 +55,7 @@ The scan runs to completion (`--follow`). The job **passes only on a complete as
 | `pipeline-testing` | | `false` | Minimal prompts for fast pipeline testing. |
 | `fail-on-severity` | | `none` | Fail the job if any **exploited** finding is at or above this severity: `none`, `low`, `medium`, `high`, `critical`. See [Severity gating](#severity-gating). |
 | `upload-artifact` | | `true` | Upload two artifacts: `shannon-report-<workspace>` (report only) and `shannon-workspace-<workspace>` (full workspace for debugging, minus `auth-state.json`). |
+| `upload-sarif` | | `false` | Upload `report.sarif` (when the config produces one) to GitHub code scanning. Requires `security-events: write`. |
 
 ## Outputs
 
@@ -107,7 +108,7 @@ with:
 
 ## SARIF / code scanning
 
-Shannon emits `report.sarif` only when your config enables exploitation and `report.sarif`. Whenever that file is produced, the action uploads it to GitHub code scanning automatically — no separate toggle. Just grant the job `security-events: write` so the findings can reach the repository's Security tab:
+Shannon emits `report.sarif` only when your config enables exploitation and `report.sarif`. To push that file to GitHub code scanning, set `upload-sarif: true` and grant the job `security-events: write` so the findings can reach the repository's Security tab:
 
 ```yaml
 permissions:
@@ -115,10 +116,11 @@ permissions:
 # ...
 with:
   config: .shannon/ci.yaml
+  upload-sarif: true
   api-key: ${{ secrets.SHANNON_AI_API_KEY }}
 ```
 
-If the config does not request SARIF, this step is skipped.
+If `upload-sarif` is false (the default) or the config produced no SARIF, this step is skipped. The SARIF file is still included in the report artifact regardless.
 
 ## Severity gating
 

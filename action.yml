@@ -62,6 +62,10 @@ inputs:
     description: 'Upload the workspace (report + logs) as a workflow artifact named shannon-report-<workspace>.'
     required: false
     default: 'true'
+  upload-sarif:
+    description: 'Upload report.sarif (when the config produces one) to GitHub code scanning. Requires the job to grant security-events: write.'
+    required: false
+    default: 'false'
 
 outputs:
   workspace-dir:
@@ -127,7 +131,7 @@ runs:
         if-no-files-found: warn
 
     - name: Upload SARIF to code scanning
-      if: ${{ steps.scan.outputs.sarif != '' }}
+      if: ${{ always() && inputs.upload-sarif == 'true' && steps.scan.outputs.sarif != '' }}
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: ${{ steps.scan.outputs.sarif }}
