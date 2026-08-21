@@ -37,6 +37,14 @@ The scan runs to completion (`--follow`). The job **passes only on a complete as
 - `shannon-report-<workspace>` — just the report (PDF + Markdown, and SARIF if produced).
 - `shannon-workspace-<workspace>` — the full workspace (logs, agent transcripts, deliverables, browser artifacts) for debugging, uploaded even on failure. The target's saved auth session (`auth-state.json`) is excluded.
 
+## Examples
+
+Ready-to-copy workflows in [`examples/`](./examples):
+
+- [`weekly-scan.yml`](./examples/weekly-scan.yml) — scheduled weekly deep scan of a deployed environment, findings sent to code scanning.
+- [`pr-scan.yml`](./examples/pr-scan.yml) — scan a pull request and block it on a demonstrated critical.
+- [`release-scan.yml`](./examples/release-scan.yml) — assess a published release against production.
+
 ## Inputs
 
 | Input | Required | Default | Description |

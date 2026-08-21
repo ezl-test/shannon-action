@@ -1,0 +1,27 @@
+# Weekly deep scan of a deployed environment, with findings sent to code scanning.
+# A scheduled deep assessment is the recommended cadence for an AI pentester — it is
+# too slow/expensive to gate every PR on, and this surfaces new risk over time.
+name: Shannon weekly scan
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'   # every Monday at 03:00 UTC
+  workflow_dispatch: {}     # also allow manual runs
+
+permissions:
+  contents: read
+  security-events: write    # required to push SARIF to code scanning
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Shannon
+        uses: KeygraphHQ/shannon-action@v1
+        with:
+          url: ${{ vars.STAGING_URL }}      # your deployed staging environment
+          config: .shannon/full.yaml        # exploit + report.sarif enabled
+          upload-sarif: true
+          api-key: ${{ secrets.SHANNON_AI_API_KEY }}
