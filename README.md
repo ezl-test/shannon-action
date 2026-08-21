@@ -51,7 +51,6 @@ The scan runs to completion (`--follow`) and the job **fails if the pipeline fai
 | `version` | | `latest` | Version of the `@keygraph/shannon` npm package to run. |
 | `pipeline-testing` | | `false` | Minimal prompts for fast pipeline testing. |
 | `upload-artifact` | | `true` | Upload the workspace (report + logs) as an artifact named `shannon-report-<workspace>`. |
-| `upload-sarif` | | `false` | Upload `report.sarif` to code scanning (needs exploit + `report.sarif` in config). |
 
 ## Outputs
 
@@ -83,7 +82,7 @@ with:
 
 ## SARIF / code scanning
 
-When your config enables exploitation and `report.sarif`, set `upload-sarif: true` and grant the job `security-events: write` to surface findings in the repository's Security tab:
+Shannon emits `report.sarif` only when your config enables exploitation and `report.sarif`. Whenever that file is produced, the action uploads it to GitHub code scanning automatically — no separate toggle. Just grant the job `security-events: write` so the findings can reach the repository's Security tab:
 
 ```yaml
 permissions:
@@ -91,9 +90,10 @@ permissions:
 # ...
 with:
   config: .shannon/ci.yaml
-  upload-sarif: true
   api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
+
+If the config does not request SARIF, this step is skipped.
 
 ## Notes
 
