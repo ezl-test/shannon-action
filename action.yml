@@ -118,9 +118,8 @@ runs:
         [ -n "$IN_CONFIG" ] && ARGS+=(-c "$IN_CONFIG")
         [ "$IN_PIPELINE_TESTING" = "true" ] && ARGS+=(--pipeline-testing)
 
-        echo "::group::shannon start"
+        echo "Running: shannon ${ARGS[*]}"
         npx --yes "@keygraph/shannon@${IN_VERSION}" "${ARGS[@]}"
-        echo "::endgroup::"
 
         # Resolve report outputs (only present on a successful run).
         {
