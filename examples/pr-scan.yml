@@ -1,7 +1,4 @@
-# Scan a pull request and block it on a demonstrated critical vulnerability.
-# A full scan is slow/expensive — for fast PR feedback, scope it with a config
-# (vuln_classes) or use pipeline-testing. Make this a required status check in
-# branch protection for the gate to actually block merges.
+# Scan a pull request's deployed preview and fail it on a demonstrated critical vulnerability.
 name: Shannon PR scan
 
 on:
@@ -16,18 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Build and serve the app so Shannon has a live target on the runner.
-      - name: Start app
-        run: |
-          docker compose up -d
-          npx --yes wait-on http://localhost:3000 --timeout 120000
-
       - name: Run Shannon
         uses: KeygraphHQ/shannon-action@v1
         with:
-          # The worker runs in a container, so an app on the runner is reached
-          # via host.docker.internal, not localhost.
-          url: http://host.docker.internal:3000
+          url: ${{ vars.PREVIEW_URL }}
           repo: ${{ github.workspace }}
-          fail-on-severity: critical        # fail the PR on a demonstrated critical
+          fail-on-severity: critical
           api-key: ${{ secrets.SHANNON_AI_API_KEY }}

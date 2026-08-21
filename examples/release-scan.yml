@@ -1,5 +1,4 @@
-# Assess a published release against the production environment, fail on a
-# demonstrated high/critical, and send findings to code scanning.
+# Scan a published release against production and send findings to code scanning.
 name: Shannon release scan
 
 on:
@@ -20,7 +19,7 @@ jobs:
         uses: KeygraphHQ/shannon-action@v1
         with:
           url: ${{ vars.PRODUCTION_URL }}
-          config: .shannon/full.yaml        # exploit + report.sarif enabled
+          config: .shannon/full.yaml
           fail-on-severity: high
           upload-sarif: true
           api-key: ${{ secrets.SHANNON_AI_API_KEY }}
