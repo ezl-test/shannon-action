@@ -77,9 +77,6 @@ runs:
       id: scan
       shell: bash
       env:
-        # Passed in via separate names so we export the real variable only when
-        # non-empty. SHANNON_AI_API_KEY is provider-neutral, so it never trips
-        # Shannon's "exactly one provider configured" guard.
         IN_API_KEY: ${{ inputs.api-key }}
         IN_MODEL: ${{ inputs.model }}
         IN_BASE_URL: ${{ inputs.base-url }}
