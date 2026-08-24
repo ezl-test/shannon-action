@@ -152,4 +152,4 @@ Because it keys on exploited findings, this gate applies to **exploit-mode scans
 
 ## License
 
-See [LICENSE](./LICENSE).
+This action is licensed under the [Apache License 2.0](./LICENSE). The Shannon CLI it runs (`@keygraph/shannon`) is licensed separately under AGPL-3.0.

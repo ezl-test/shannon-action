@@ -1,4 +1,4 @@
-name: 'Shannon Pentest'
+name: 'ezl pentest'
 description: 'Run Shannon, the autonomous white-box AI pentester, against a target URL and repository.'
 author: 'Keygraph'
 
