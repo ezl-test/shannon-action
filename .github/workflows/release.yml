@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag the major version should point to (e.g. v1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  update-version-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Move the major and minor version tags
+        env:
+          SOURCE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if ! printf '%s' "$SOURCE_TAG" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::'$SOURCE_TAG' is not a stable semantic version (vX.Y.Z)."
+            exit 1
+          fi
+
+          MAJOR="${SOURCE_TAG%%.*}"                            # v1.2.3 -> v1
+          MINOR="$(printf '%s' "$SOURCE_TAG" | cut -d. -f1,2)" # v1.2.3 -> v1.2
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for TAG in "$MAJOR" "$MINOR"; do
+            git tag -f "$TAG" "$SOURCE_TAG"
+            git push origin "$TAG" --force
+            echo "'$TAG' now points to '$SOURCE_TAG'."
+          done
