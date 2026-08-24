@@ -60,7 +60,7 @@ Ready-to-copy workflows in [`examples/`](./examples):
 | `api-key` | | — | LLM provider API key (`SHANNON_AI_API_KEY`) for any non-Bedrock provider, including the default Anthropic model. |
 | `aws-bearer-token-bedrock` | | — | Amazon Bedrock bearer token (`AWS_BEARER_TOKEN_BEDROCK`). Required for `model: amazon-bedrock:...`. |
 | `aws-region` | | — | AWS region for Bedrock (`AWS_REGION`). Required for `model: amazon-bedrock:...`. |
-| `version` | | `latest` | Version of the `@keygraph/shannon` npm package to run. |
+| `version` | | `2.5.2` | Version of the `@keygraph/shannon` npm package to run. |
 | `pipeline-testing` | | `false` | Minimal prompts for fast pipeline testing. |
 | `fail-on-severity` | | `none` | Fail the job if any **exploited** finding is at or above this severity: `none`, `low`, `medium`, `high`, `critical`. See [Severity gating](#severity-gating). |
 | `upload-artifact` | | `true` | Upload two artifacts: `shannon-report-<workspace>` (report only) and `shannon-workspace-<workspace>` (full workspace for debugging, minus `auth-state.json`). |
