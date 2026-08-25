@@ -114,28 +114,15 @@ runs:
       shell: bash
       run: npx --yes "@keygraph/shannon@${{ inputs.version }}" stop "${{ inputs.workspace }}" -y 2>/dev/null || true
 
-    - name: Upload PDF report
-      if: ${{ always() && steps.scan.outputs.report-pdf != '' }}
+    - name: Upload report bundle
+      if: ${{ always() && steps.scan.outputs.workspace-dir != '' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: Security-Assessment-Report.pdf
-        path: ${{ steps.scan.outputs.report-pdf }}
-        if-no-files-found: warn
-
-    - name: Upload Markdown report
-      if: ${{ always() && steps.scan.outputs.report-md != '' }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-        name: Security-Assessment-Report.md
-        path: ${{ steps.scan.outputs.report-md }}
-        if-no-files-found: warn
-
-    - name: Upload SARIF
-      if: ${{ always() && steps.scan.outputs.sarif != '' }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-        name: report.sarif
-        path: ${{ steps.scan.outputs.sarif }}
+        name: shannon-report-${{ inputs.workspace }}
+        path: |
+          ${{ steps.scan.outputs.workspace-dir }}/Security-Assessment-Report.pdf
+          ${{ steps.scan.outputs.workspace-dir }}/Security-Assessment-Report.md
+          ${{ steps.scan.outputs.workspace-dir }}/report.sarif
         if-no-files-found: warn
 
     - name: Upload run folder

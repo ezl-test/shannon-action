@@ -33,14 +33,12 @@ jobs:
           api-key: ${{ secrets.SHANNON_AI_API_KEY }}
 ```
 
-The scan runs to completion (`--follow`). The job **passes only on a complete assessment**: it fails if the scan produced no report, or if any vulnerability class could not be assessed (a partial run — because absence of findings for an unassessed class is not a clean result). Four artifacts are uploaded, each separately downloadable:
+The scan runs to completion (`--follow`). The job **passes only on a complete assessment**: it fails if the scan produced no report, or if any vulnerability class could not be assessed (a partial run — because absence of findings for an unassessed class is not a clean result). Two artifacts are uploaded:
 
-- `Security-Assessment-Report.pdf` — the report PDF.
-- `Security-Assessment-Report.md` — the report Markdown.
-- `report.sarif` — the SARIF log (only when the config produces one).
+- `shannon-report-<workspace>` — the report deliverables bundled together: `Security-Assessment-Report.pdf`, `Security-Assessment-Report.md`, and `report.sarif` (when the config produces one).
 - `shannon-run-<workspace>` — the full run folder (logs, agent transcripts, deliverables, browser artifacts) for debugging, uploaded even on failure. The target's saved auth session (`auth-state.json`) is excluded.
 
-Each per-file artifact is named after the file it holds. GitHub wraps every artifact in a zip on download, so `Security-Assessment-Report.pdf` downloads as `Security-Assessment-Report.pdf.zip` containing that one file. Artifact names must be unique within a run, so if you run this action in a **matrix**, give each leg a distinct `workspace` — the per-file names above do not vary by leg and would otherwise collide.
+GitHub wraps every artifact in a zip on download, so `shannon-report-<workspace>` downloads as a single zip holding the three deliverables (bundling avoids a pointless one-file zip per report). Artifact names must be unique within a run, so if you run this action in a **matrix**, give each leg a distinct `workspace`.
 
 ## Examples
 
