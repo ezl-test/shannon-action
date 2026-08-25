@@ -108,6 +108,16 @@ runs:
         IN_FAIL_ON_SEVERITY: ${{ inputs.fail-on-severity }}
       run: bash "$GITHUB_ACTION_PATH/scripts/scan.sh"
 
+    # Self-hosted runners persist the Docker daemon across jobs, so a canceled or failed
+    # run would orphan Shannon's worker container (the scan runs in a decoupled Temporal
+    # worker, not in the job process). if: always() runs on success, failure, AND
+    # cancellation; stop this run's worker, scoped to its workspace. No-op on GitHub-hosted
+    # runners, which are discarded after the job.
+    - name: Stop Shannon worker
+      if: always()
+      shell: bash
+      run: npx --yes "@keygraph/shannon@${{ inputs.version }}" stop "${{ inputs.workspace }}" -y 2>/dev/null || true
+
     - name: Upload report artifact
       if: ${{ always() && inputs.upload-artifact == 'true' && steps.scan.outputs.workspace-dir != '' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
