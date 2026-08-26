@@ -1,3 +1,11 @@
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/shannon-banner-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/shannon-banner-light.png">
+  <img src="./assets/shannon-banner-light.png" alt="Shannon - AI Pentester by Keygraph" width="100%">
+</picture>
+</div>
+
 # Shannon GitHub Action
 
 Run [Shannon](https://github.com/KeygraphHQ/shannon), Keygraph's autonomous white-box AI pentester, from a GitHub Actions workflow. Shannon reads your source code, maps the attack surface, and exploits real vulnerabilities against a running target, then hands you a security assessment report. This action is a thin wrapper around the [`@keygraph/shannon`](https://www.npmjs.com/package/@keygraph/shannon) CLI.
