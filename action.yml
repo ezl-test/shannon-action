@@ -197,7 +197,7 @@ runs:
         echo " $headline"
         if [ -n "$FINDINGS_LINE" ]; then
           echo ""
-          echo " $FINDINGS_LINE"
+          echo "$FINDINGS_LINE"
           [ -n "$NOT_ASSESSED" ] && echo " Not assessed: $NOT_ASSESSED"
         fi
         if [ -n "$REPORT_URL" ] || [ -n "$RUN_URL" ]; then

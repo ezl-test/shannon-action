@@ -105,8 +105,9 @@ write_summary() {
   } >> "$GITHUB_STEP_SUMMARY"
 }
 
-# A single plain-text findings line for the log footer, mirroring the summary table's counts.
-# Exploit mode counts exploited findings; an analysis-only scan counts all findings.
+# A plain-text findings block for the log footer, one severity per line, mirroring the
+# summary table's counts. Exploit mode counts exploited findings; an analysis-only scan
+# counts all findings. Each line is indented to sit under the footer's headline.
 findings_line() {
   [ -f "$REPORT_JSON" ] || return 0
   node -e '
@@ -116,7 +117,9 @@ findings_line() {
     const label = exploitMode ? "Exploited findings" : "Findings";
     const counts = (s) => f.filter((x) => x.severity === s && (!exploitMode || x.status === "exploited")).length;
     const total = f.filter((x) => !exploitMode || x.status === "exploited").length;
-    process.stdout.write(`${label}:  critical ${counts("critical")}   high ${counts("high")}   medium ${counts("medium")}   low ${counts("low")}   |   total ${total}`);
+    const sevs = ["critical", "high", "medium", "low"];
+    const rows = sevs.map((s) => `   ${s.padEnd(8)}  ${counts(s)}`).join("\n");
+    process.stdout.write(` ${label}:\n${rows}\n   ─────────────\n   ${"total".padEnd(8)}  ${total}`);
   ' "$REPORT_JSON"
 }
 
@@ -149,8 +152,18 @@ main() {
   {
     echo "outcome=$outcome"
     echo "not-assessed=$not_assessed"
-    [ "$has_report" = "yes" ] && echo "findings-line=$(findings_line)"
   } >> "$GITHUB_OUTPUT"
+
+  # findings-line is now multi-line, so it uses the heredoc form of $GITHUB_OUTPUT. The
+  # trailing echo terminates the block's last line before the closing delimiter.
+  if [ "$has_report" = "yes" ]; then
+    {
+      echo "findings-line<<SHANNON_FINDINGS_EOF"
+      findings_line
+      echo ""
+      echo "SHANNON_FINDINGS_EOF"
+    } >> "$GITHUB_OUTPUT"
+  fi
 
   if [ "$has_report" = "no" ]; then
     echo "::error title=Shannon scan failed::The scan did not produce a report."
