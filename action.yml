@@ -115,6 +115,7 @@ runs:
       run: npx --yes "@keygraph/shannon@${{ inputs.version }}" stop "${{ inputs.workspace }}" -y 2>/dev/null || true
 
     - name: Upload report bundle
+      id: upload_report
       if: ${{ always() && steps.scan.outputs.workspace-dir != '' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
@@ -126,6 +127,7 @@ runs:
         if-no-files-found: warn
 
     - name: Upload run folder
+      id: upload_run
       if: ${{ always() && steps.scan.outputs.workspace-dir != '' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
@@ -141,3 +143,62 @@ runs:
       uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
       with:
         sarif_file: ${{ steps.scan.outputs.sarif }}
+
+    - name: Publish artifact links
+      if: ${{ always() && steps.scan.outputs.workspace-dir != '' }}
+      shell: bash
+      env:
+        REPORT_NAME: shannon-report-${{ inputs.workspace }}
+        REPORT_URL: ${{ steps.upload_report.outputs.artifact-url }}
+        RUN_NAME: shannon-run-${{ inputs.workspace }}
+        RUN_URL: ${{ steps.upload_run.outputs.artifact-url }}
+        OUTCOME: ${{ steps.scan.outputs.outcome }}
+        FINDINGS_LINE: ${{ steps.scan.outputs.findings-line }}
+        NOT_ASSESSED: ${{ steps.scan.outputs.not-assessed }}
+      run: |
+        REPORT_DESC="Security Assessment Report (PDF + Markdown) + SARIF"
+        RUN_DESC="scan log, agent logs, and other run-related files (for debugging)"
+
+        # Rendered links in the job Summary.
+        if [ -n "$REPORT_URL" ] || [ -n "$RUN_URL" ]; then
+          {
+            echo ""
+            echo "### Artifacts"
+            echo ""
+            [ -n "$REPORT_URL" ] && echo "- [\`$REPORT_NAME\`]($REPORT_URL) — $REPORT_DESC"
+            [ -n "$RUN_URL" ]    && echo "- [\`$RUN_NAME\`]($RUN_URL) — $RUN_DESC"
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+        # Plain-text footer in the job log. An empty OUTCOME means scan.sh was killed before it
+        # published one — i.e. the run was cancelled or timed out mid-scan.
+        case "$OUTCOME" in
+          completed) headline="The scan completed. Your report is ready." ;;
+          partial)   headline="The scan finished, but some vulnerability classes were not assessed." ;;
+          failed)    headline="The scan did not produce a report." ;;
+          *)         headline="The scan stopped before completing (cancelled or timed out)." ;;
+        esac
+
+        echo ""
+        echo "────────────────────────────────────────────────────────────"
+        echo " Next steps"
+        echo "────────────────────────────────────────────────────────────"
+        echo " $headline"
+        if [ -n "$FINDINGS_LINE" ]; then
+          echo ""
+          echo " $FINDINGS_LINE"
+          [ -n "$NOT_ASSESSED" ] && echo " Not assessed: $NOT_ASSESSED"
+        fi
+        if [ -n "$REPORT_URL" ] || [ -n "$RUN_URL" ]; then
+          echo ""
+          echo " Download from this run:"
+          if [ -n "$REPORT_URL" ]; then
+            echo "   • $REPORT_NAME — $REPORT_DESC"
+            echo "     $REPORT_URL"
+          fi
+          if [ -n "$RUN_URL" ]; then
+            echo "   • $RUN_NAME — $RUN_DESC"
+            echo "     $RUN_URL"
+          fi
+        fi
+        echo "────────────────────────────────────────────────────────────"

@@ -147,7 +147,7 @@ Because it keys on exploited findings, this gate applies to **exploit-mode scans
 
 ## Notes
 
-- A findings summary is written to the run's job summary: exploited counts by severity, or total findings by severity for an analysis-only scan (`exploit: false`).
+- A findings summary is written to the run's job summary: exploited counts by severity, or total findings by severity for an analysis-only scan (`exploit: false`), followed by download links to the uploaded artifacts. The job **log** also ends with a plain-text "Next steps" footer carrying the same counts and the artifact download URLs, so it is useful even without opening the Summary tab.
 - The first run pulls the `keygraph/shannon` worker image and the Temporal image; subsequent runs on a warm runner are faster.
 - Pass/fail is decided from the structured `report.json`: the job passes only when every vulnerability class was assessed. It does **not** fail merely because vulnerabilities were found — gate on findings by inspecting the report if you need that.
 

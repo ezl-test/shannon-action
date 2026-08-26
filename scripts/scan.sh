@@ -105,6 +105,21 @@ write_summary() {
   } >> "$GITHUB_STEP_SUMMARY"
 }
 
+# A single plain-text findings line for the log footer, mirroring the summary table's counts.
+# Exploit mode counts exploited findings; an analysis-only scan counts all findings.
+findings_line() {
+  [ -f "$REPORT_JSON" ] || return 0
+  node -e '
+    const d = require(process.argv[1]);
+    const f = Array.isArray(d.findings) ? d.findings : [];
+    const exploitMode = !(d.report_meta && d.report_meta.exploit === false);
+    const label = exploitMode ? "Exploited findings" : "Findings";
+    const counts = (s) => f.filter((x) => x.severity === s && (!exploitMode || x.status === "exploited")).length;
+    const total = f.filter((x) => !exploitMode || x.status === "exploited").length;
+    process.stdout.write(`${label}:  critical ${counts("critical")}   high ${counts("high")}   medium ${counts("medium")}   low ${counts("low")}   |   total ${total}`);
+  ' "$REPORT_JSON"
+}
+
 main() {
   export_credentials
 
@@ -128,6 +143,14 @@ main() {
   fi
 
   write_summary "$outcome" "$not_assessed"
+
+  # Hand the outcome and the findings line to the post-upload step, which prints them to the log
+  # next to the artifact download URLs (those exist only once actions/upload-artifact has run).
+  {
+    echo "outcome=$outcome"
+    echo "not-assessed=$not_assessed"
+    [ "$has_report" = "yes" ] && echo "findings-line=$(findings_line)"
+  } >> "$GITHUB_OUTPUT"
 
   if [ "$has_report" = "no" ]; then
     echo "::error title=Shannon scan failed::The scan did not produce a report."
