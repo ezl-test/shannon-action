@@ -58,17 +58,17 @@ severity_gate() {
     *) echo "::error title=Shannon config error::Invalid fail-on-severity '$IN_FAIL_ON_SEVERITY' (expected none, low, medium, high, or critical)."; exit 1 ;;
   esac
 
-  local offending
-  offending="$(node -e '
+  local count
+  count="$(node -e '
     const d = require(process.argv[1]);
     const rank = { critical: 4, high: 3, medium: 2, low: 1 };
     const threshold = rank[process.argv[2]];
-    const hit = (d.findings || []).filter((f) => f.status === "exploited" && (rank[f.severity] || 0) >= threshold);
-    process.stdout.write(hit.map((f) => `${f.finding_id || "finding"} (${f.severity})`).join(", "));
+    const n = (d.findings || []).filter((f) => f.status === "exploited" && (rank[f.severity] || 0) >= threshold).length;
+    process.stdout.write(String(n));
   ' "$REPORT_JSON" "$IN_FAIL_ON_SEVERITY")"
 
-  if [ -n "$offending" ]; then
-    echo "::error title=Shannon severity gate::Exploited findings at or above '$IN_FAIL_ON_SEVERITY' severity: ${offending}."
+  if [ "${count:-0}" -gt 0 ] 2>/dev/null; then
+    echo "::error title=Shannon severity gate::${count} exploited finding(s) at or above '$IN_FAIL_ON_SEVERITY' severity. See the job summary or the shannon-report artifact."
     exit 1
   fi
 }

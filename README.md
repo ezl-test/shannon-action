@@ -137,6 +137,8 @@ with:
 
 This gate counts only findings Shannon actually exploited (`status: exploited`). These are proven, not suspected, so it rarely fires on false positives. Severities rank `critical > high > medium > low`; a finding trips the job when its severity is at or above the threshold. Because it keys on exploited findings, it applies to exploit-mode scans only; an analysis-only scan (`exploit: false`) never trips it.
 
+When the gate fails it reports how many findings crossed the threshold, not their details. If you use it to block PRs, also set `upload-sarif: true` so the findings appear in code scanning with their code locations, instead of leaving the author to dig through the report.
+
 ## SARIF / code scanning
 
 Shannon writes `report.sarif` when your config enables exploitation and `report.sarif`. To push it to GitHub code scanning, set `upload-sarif: true` and grant the job `security-events: write`:
