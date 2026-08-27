@@ -176,8 +176,8 @@ runs:
             echo ""
             echo "### Artifacts"
             echo ""
-            [ -n "$REPORT_URL" ] && echo "- [\`$REPORT_NAME\`]($REPORT_URL) — $REPORT_DESC"
-            [ -n "$RUN_URL" ]    && echo "- [\`$RUN_NAME\`]($RUN_URL) — $RUN_DESC"
+            [ -n "$REPORT_URL" ] && echo "- [\`$REPORT_NAME\`]($REPORT_URL) - $REPORT_DESC"
+            [ -n "$RUN_URL" ]    && echo "- [\`$RUN_NAME\`]($RUN_URL) - $RUN_DESC"
           } >> "$GITHUB_STEP_SUMMARY"
         fi
 
@@ -204,13 +204,13 @@ runs:
           echo ""
           echo " Download from this run:"
           if [ -n "$REPORT_URL" ]; then
-            echo "   • $REPORT_NAME — $REPORT_DESC"
+            echo "   • $REPORT_NAME - $REPORT_DESC"
             echo "     $REPORT_URL"
           fi
           if [ -n "$RUN_URL" ]; then
-            echo "   • $RUN_NAME — $RUN_DESC"
+            echo "   • $RUN_NAME - $RUN_DESC"
             echo "     $RUN_URL"
           fi
         fi
         echo "────────────────────────────────────────────────────────────"
-        printf '\033[90m Shannon — AI Pentester by Keygraph · https://keygraph.io\033[0m\n'
+        printf '\033[90m Shannon - AI Pentester by Keygraph · https://keygraph.io\033[0m\n'
