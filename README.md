@@ -46,6 +46,7 @@ jobs:
 - A runner with Docker (daemon + `docker compose` v2) and access to Docker Hub. `ubuntu-latest` satisfies this out of the box.
 - Node.js is set up for you.
 - An AI provider API key (see [Credentials](#credentials)).
+- A private repository. The action refuses to run on public ones: its report, logs, and artifacts can contain sensitive security findings about your application.
 
 ### Job timeout
 
