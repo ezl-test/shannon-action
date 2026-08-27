@@ -102,6 +102,8 @@ write_summary() {
       echo ""
       echo "Not assessed: $not_assessed"
     fi
+    echo ""
+    echo "<sub>Shannon — AI Pentester by Keygraph</sub>"
   } >> "$GITHUB_STEP_SUMMARY"
 }
 

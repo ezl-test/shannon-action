@@ -162,3 +162,7 @@ Point Shannon at a staging or development environment you own. It actively explo
 ## License
 
 This action is licensed under the [Apache License 2.0](./LICENSE). The Shannon CLI it runs (`@keygraph/shannon`) is licensed separately under [AGPL-3.0](https://github.com/KeygraphHQ/shannon/blob/main/LICENSE).
+
+<p align="center">
+  <b>Built by <a href="https://keygraph.io">Keygraph</a></b>
+</p>
