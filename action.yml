@@ -213,3 +213,4 @@ runs:
           fi
         fi
         echo "────────────────────────────────────────────────────────────"
+        printf '\033[90m Shannon — AI Pentester by Keygraph\033[0m\n'
