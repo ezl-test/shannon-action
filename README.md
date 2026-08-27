@@ -47,6 +47,10 @@ jobs:
 - Node.js is set up for you.
 - An AI provider API key (see [Credentials](#credentials)).
 
+### Job timeout
+
+A job gets 6 hours by default (`timeout-minutes` defaults to `360`), which is enough for Shannon.
+
 ## Examples
 
 Ready-to-copy workflows in [`examples/`](./examples):
