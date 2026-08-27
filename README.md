@@ -2,7 +2,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./assets/shannon-banner-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="./assets/shannon-banner-light.png">
-  <img src="./assets/shannon-banner-light.png" alt="Shannon - AI Pentester by Keygraph" width="100%">
+  <img src="./assets/shannon-banner-light.png" alt="Shannon, AI Pentester for Web Apps and APIs, by Keygraph" width="100%">
 </picture>
 </div>
 
@@ -154,6 +154,10 @@ with:
 ```
 
 If `upload-sarif` is `false` (the default) or no SARIF was produced, this step is skipped. The SARIF file is included in the report artifact either way.
+
+## Editions
+
+This action runs **Shannon Open Source**, the standalone pentester you run yourself. The **Keygraph platform** is the commercial product that runs an enhanced build of Shannon continuously and closes the full AppSec lifecycle around it — code analysis, finding management, automated remediation, and verification. See [Editions](https://github.com/KeygraphHQ/shannon#editions) for how the two compare.
 
 ## Security
 
